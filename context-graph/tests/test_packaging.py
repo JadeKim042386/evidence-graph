@@ -38,13 +38,13 @@ def _read_text(*parts):
 
 def test_the_marketplace_points_at_the_plugin():
     marketplace = _read_json(".claude-plugin", "marketplace.json")
-    assert marketplace["name"] == "context-graph"
+    assert marketplace["name"] == "evidence-graph"
     assert marketplace["plugins"][0]["source"] == "./context-graph"
 
 
 def test_the_plugin_manifest_has_a_name_and_a_version():
     plugin = _read_json("context-graph", ".claude-plugin", "plugin.json")
-    assert plugin["name"] == "context-graph"
+    assert plugin["name"] == "evidence-graph"
     assert plugin["version"]
     assert plugin["author"]["name"] == "KimJooYoung"
 
@@ -52,7 +52,7 @@ def test_the_plugin_manifest_has_a_name_and_a_version():
 def test_the_plugin_packages_a_knowledge_engineer_agent():
     agent = _read_text("context-graph", "agents", "knowledge-engineer.md")
     assert "name: knowledge-engineer" in agent
-    assert "skills: context-graph" in agent
+    assert "skills: evidence-graph" in agent
     assert "analysis" in agent.lower()
     assert "propose" in agent.lower()
     assert "modify" in agent.lower()
@@ -116,7 +116,7 @@ def test_the_packaged_readme_does_not_keep_a_claim_the_code_stopped_making():
 
 
 def test_the_skill_states_the_same_rules():
-    skill = _read_text("context-graph", "skills", "context-graph", "SKILL.md")
+    skill = _read_text("context-graph", "skills", "evidence-graph", "SKILL.md")
     assert "written in" in skill
     assert "answer_budget" in skill                  # the setting is named, not a number in prose
     assert "narrowly" in skill
@@ -127,19 +127,19 @@ def test_the_skill_quotes_the_default_budget_the_code_actually_uses():
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
     from config import DEFAULT_CONFIG
 
-    skill = _read_text("context-graph", "skills", "context-graph", "SKILL.md")
+    skill = _read_text("context-graph", "skills", "evidence-graph", "SKILL.md")
     default = DEFAULT_CONFIG["answer_budget"]
     assert f"{default:,}" in skill or str(default) in skill
 
 
 # ---------- installed Codex layout: parity, import isolation, CLI isolation ----------
-# Codex installs skills/context-graph/ on its own. Everything ask.py and build_map.py need has to
-# be a regular file inside skills/context-graph/scripts/, byte-identical to the bound scripts/
+# Codex installs skills/evidence-graph/ on its own. Everything ask.py and build_map.py need has to
+# be a regular file inside skills/evidence-graph/scripts/, byte-identical to the bound scripts/
 # implementation, and the CLI has to bind to the fixture project alone - no global config, no
 # environment override, no path outside the installed directory.
 
 BOUND_SCRIPTS = Path(ROOT).resolve() / "context-graph" / "scripts"
-INSTALLED_SCRIPTS = Path(ROOT).resolve() / "context-graph" / "skills" / "context-graph" / "scripts"
+INSTALLED_SCRIPTS = Path(ROOT).resolve() / "context-graph" / "skills" / "evidence-graph" / "scripts"
 SHIPPED_MODULES = ("ask.py", "build_map.py", "config.py", "freshness.py",
                    "conflicts.py", "parse_html.py", "parse_markdown.py", "score.py")
 

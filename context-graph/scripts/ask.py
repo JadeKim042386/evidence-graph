@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 from config import BindingError, binding_failure, load_project_config
+import config as binding_config
 
 # A single character such as an em dash (—) can break the default console encoding
 # on some Windows configurations. Pin UTF-8 here so a completed answer is not lost.
@@ -24,6 +25,59 @@ for stream in (sys.stdout, sys.stderr):
         pass
 
 DOCUMENT_SUFFIXES = (".md", ".markdown", ".html", ".htm")
+
+
+def validate_evidence_map(graph, binding):
+    """Validate every node/link; resolve each distinct source once per call.
+
+    Same contract as config.validate_bound_map. Only repeated path resolution
+    is coalesced; no positive result survives this invocation. Freshness and
+    evidence replay independently authorize and hash the actual source files.
+    """
+    if graph.get("project_binding") != binding:
+        raise BindingError("map_binding_mismatch")
+    if not isinstance(graph.get("nodes"), list) or not isinstance(graph.get("links"), list):
+        raise BindingError("invalid_map")
+    ids, sources = set(), set()
+    for node in graph["nodes"]:
+        if not isinstance(node, dict) or not isinstance(node.get("id"), str) or node["id"] in ids:
+            raise BindingError("invalid_map")
+        ids.add(node["id"])
+        source = node.get("source_file")
+        if source:
+            if not isinstance(source, str) or not Path(source).is_absolute():
+                raise BindingError("invalid_map_source_path")
+            if source not in sources:
+                try:
+                    binding_config.validate_source_path(source, binding, require_exists=False)
+                except BindingError as exc:
+                    if exc.reason == "source_outside_project":
+                        raise BindingError("map_source_outside_allowed_roots") from exc
+                    raise
+                sources.add(source)
+        elif node.get("kind") != "name_only":
+            raise BindingError("map_source_missing")
+    for link in graph["links"]:
+        if not isinstance(link, dict) or not isinstance(link.get("source"), str) or not isinstance(link.get("target"), str):
+            raise BindingError("invalid_map")
+        if link["source"] not in ids or link["target"] not in ids:
+            raise BindingError("invalid_map")
+
+
+def load_evidence_config(project_root, config_path=None):
+    """Read-only evidence route: keep binding/freshness, coalesce path checks."""
+    config, binding, resolved, _ = load_project_config(project_root, config_path, require_map=False)
+    graph, map_hash = binding_config._binding_json(Path(config["map_path"]), "map")
+    validate_evidence_map(graph, binding)
+    try:
+        snapshot_hash = binding_config.verify_freshness(
+            graph, config["source_dirs"],
+            lambda path: binding_config.validate_source_path(path, binding))
+    except binding_config.FreshnessError as exc:
+        raise BindingError(str(exc)) from exc
+    resolved.update(map_sha256=map_hash, map_state="verified", freshness_state="verified",
+                    source_snapshot_sha256=snapshot_hash)
+    return config, binding, resolved, graph
 
 
 def retrieval_gate(expected, trusted_context=None, *, context_gate=None):
@@ -1113,6 +1167,139 @@ def run(mode, arguments, source_dirs, map_path, budget, selector="legacy"):
     return completed.returncode
 
 
+def attach_evidence_context(result, budget):
+    """Replay enclosing media metadata without interpreting it as approval."""
+    from evidence_units import _Units
+
+    class Figures(_Units):
+        def __init__(self):
+            super().__init__()
+            self.stack, self.unit_contexts = [], []
+            self.unit_owner = None
+
+        def handle_starttag(self, tag, attrs):
+            if tag == 'figure':
+                selected = {k: v for k, v in attrs if v is not None and k in {
+                    'data-rights-status', 'data-license', 'data-rights-evidence',
+                    'data-verification', 'data-media-type', 'data-stable-locator',
+                    'data-canonical-url', 'data-accessed'}}
+                self.stack.append({'source_location': self.getpos()[0],
+                                   'attributes': selected})
+            was_active = self.active
+            super().handle_starttag(tag, attrs)
+            if not was_active and self.active:
+                self.unit_owner = self.stack[-1] if self.stack else None
+
+        def handle_endtag(self, tag):
+            before = len(self.units)
+            super().handle_endtag(tag)
+            if len(self.units) > before:
+                self.unit_contexts.append((self.units[-1], self.unit_owner))
+            if tag == 'figure' and self.stack:
+                context = self.stack.pop()
+                context['source_end'] = self.getpos()[0]
+
+    contexts, ownerships, hits, omitted = {}, {}, [], result['omitted_units']
+    for original in result['hits']:
+        hit = dict(original)
+        source = hit['source_file']
+        if Path(source).suffix.lower() in {'.html', '.htm'}:
+            if source not in contexts:
+                raw = Path(source).read_bytes()
+                if hashlib.sha256(raw).hexdigest() != hit['source_sha256']:
+                    raise ValueError('source_changed_during_context')
+                parser = Figures()
+                parser.feed(raw.decode('utf-8')); parser.close()
+                contexts[source] = parser.unit_contexts
+                ownerships[source] = {}
+                for unit, owner in parser.unit_contexts:
+                    key = tuple(unit[k] for k in ('label', 'source_location', 'source_end'))
+                    ownerships[source].setdefault(key, []).append(owner)
+            matching = [c for unit, c in contexts[source]
+                        if all(unit[k] == hit[k] for k in ('label', 'source_location', 'source_end'))]
+            # Line-only locators cannot disambiguate identical same-line units.
+            # Never borrow metadata from another occurrence or an unclosed figure.
+            if (matching and matching[0] and matching[0].get('source_end')
+                    and matching[0]['attributes'] and all(c == matching[0] for c in matching)
+                    and matching[0]['source_location'] <= hit['source_location']
+                    and matching[0]['source_end'] >= hit['source_end']):
+                context = matching[0]
+                companions, seen = [], set()
+                for unit, owner in contexts[source]:
+                    if owner is not context or all(unit[k] == hit[k] for k in
+                                                  ('label', 'source_location', 'source_end')):
+                        continue
+                    if not (context['source_location'] <= unit['source_location']
+                            <= unit['source_end'] <= context['source_end']):
+                        continue
+                    # A same-line duplicate outside this container is ambiguous.
+                    key = tuple(unit[k] for k in ('label', 'source_location', 'source_end'))
+                    if not all(other_owner == context for other_owner in ownerships[source][key]):
+                        continue
+                    complete_key = (*key, unit['heading'])
+                    if complete_key not in seen:
+                        seen.add(complete_key)
+                        companions.append(dict(unit))
+                hit['source_context'] = {**context}
+                if companions:
+                    hit['source_context']['companion_units'] = companions
+        if len(json.dumps(hits + [hit], ensure_ascii=False).encode('utf-8')) <= budget:
+            hits.append(hit)
+        else:
+            omitted += 1
+    return {**result, 'hits': hits, 'omitted_units': omitted,
+            'partial': result['partial'] or bool(omitted)}
+
+
+def compact_evidence_provenance(result, project_root):
+    """Lossless wire format: keep every unit and locator; intern source digests."""
+    root = Path(project_root)
+    if not root.is_absolute() or '..' in root.parts:
+        raise ValueError('source_revision_invalid_root')
+    revisions, hits = {}, []
+    for original in result['hits']:
+        source, digest = original.get('source_file'), original.get('source_sha256')
+        if (not isinstance(source, str) or not source or not isinstance(digest, str)
+                or re.fullmatch(r'[0-9a-f]{64}', digest) is None):
+            raise ValueError('source_revision_missing_or_invalid')
+        path = Path(source)
+        if not path.is_absolute() or '..' in path.parts:
+            raise ValueError('source_revision_invalid_path')
+        source = './' + path.relative_to(root).as_posix()
+        if source in revisions and revisions[source] != digest:
+            raise ValueError('source_revision_conflict')
+        revisions[source] = digest
+        hits.append({**{k: v for k, v in original.items() if k != 'source_sha256'},
+                     'source_file': source})
+    return {**result, 'hits': hits, 'source_revisions': revisions,
+            'provenance_format': 'source_revisions_by_path_v1'}
+
+
+def retrieve_evidence_pack(graph, question, budget, authorize_source=None):
+    """Distinguish a completed authorized scan from a budget-limited result pack."""
+    from evidence_units import retrieve_units
+    scanned = []
+
+    def allowed(source):
+        if authorize_source is not None and not authorize_source(source):
+            return False
+        scanned.append(source)
+        return True
+
+    result = retrieve_units(graph, question, budget, asked_words,
+                            matching_word_count, allowed)
+    result = attach_evidence_context(result, budget)
+    # Reached only after every authorized path was read and digest-verified.
+    # Do not expose denied paths/counts, or equate lexical scanning with semantic proof.
+    result['search_scope'] = {
+        'scope': 'authorized_paths_in_bound_map',
+        'authorized_source_paths_scanned': len(scanned),
+        'source_scan_complete': True,
+        'semantic_exhaustiveness': 'not_established',
+    }
+    return result
+
+
 def main(argv):
     """Read the paths and the budget from the config, then ask. No path is hard-coded."""
     if not argv:
@@ -1123,13 +1310,19 @@ def main(argv):
     parser.add_argument("--config")
     parser.add_argument("--binding-only", action="store_true")
     parser.add_argument("--read-only", action="store_true")
+    parser.add_argument("--evidence-units", action="store_true")
+    parser.add_argument("--compact-provenance", action="store_true")
     parser.add_argument("--selector", choices=("legacy", "pointer-v1", "group-v1", "group-v2"), default="legacy")
     parser.add_argument("--harness-manifest", help="launcher-provided role authorization manifest")
     options, argv = parser.parse_known_args(argv)
     try:
-        config, _binding, resolved, graph = load_project_config(options.project_root, options.config)
+        loader = load_evidence_config if options.read_only and options.evidence_units else load_project_config
+        config, _binding, resolved, graph = loader(options.project_root, options.config)
     except BindingError as exc:
         print(json.dumps(binding_failure(exc.reason), sort_keys=True))
+        return 2
+    if options.compact_provenance and not (options.read_only and options.evidence_units):
+        print(json.dumps(binding_failure("compact_provenance_requires_evidence_units")))
         return 2
     if options.binding_only:
         print(json.dumps({"binding": resolved, "hits": []}, sort_keys=True))
@@ -1153,6 +1346,23 @@ def main(argv):
         if not argv or any(arg.startswith("--") for arg in argv):
             print(json.dumps(binding_failure("read_only_requires_plain_query")))
             return 2
+        if options.evidence_units:
+            try:
+                allowed = None
+                if harness_context is not None:
+                    from role_access import authorize, authorize_pointer
+                    authorize(harness_context, action="read")
+                    allowed = lambda source: authorize_pointer(harness_context, source)
+                result = retrieve_evidence_pack(graph, " ".join(argv),
+                                               config["answer_budget"], allowed)
+                if options.compact_provenance:
+                    result = compact_evidence_provenance(result, resolved['project_root'])
+            except (OSError, ValueError, UnicodeError) as exc:
+                print(json.dumps(binding_failure("evidence_units_unverified:" + str(exc))))
+                return 2
+            print(json.dumps({"binding": resolved, **result}, ensure_ascii=False,
+                             sort_keys=True, separators=(",", ":")))
+            return 0
         matches = statements_carrying_the_words(config["map_path"], asked_words(" ".join(argv)), nodes=graph["nodes"])
         if harness_context is not None:
             from role_access import AccessDenied, authorize, authorize_pointer

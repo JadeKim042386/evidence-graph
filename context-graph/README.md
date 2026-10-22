@@ -1,4 +1,7 @@
-# Context Graph Skill Package
+# Evidence Graph Skill Package
+
+Evidence Graph is the public name and the registered skill identifier is
+`evidence-graph`.
 
 This package provides a cross-runtime Knowledge Engineering Skill for Codex and
 Claude Code. It supports analysis, proposal, review, and modification workflows,
@@ -162,9 +165,9 @@ binding, or a source changed since the last build, returns
 `binding.status=unverified`, `hits=[]`, and exit code 2. Treat that as a stop,
 not as permission to create configuration or rebuild. Legacy setup-generated
 configurations are not migrated automatically; see
-`skills/context-graph/references/project-binding.md` for the local contract.
+`skills/evidence-graph/references/project-binding.md` for the local contract.
 The Codex-installed skill ships the same scripts under
-`skills/context-graph/scripts/` and follows the same rule.
+`skills/evidence-graph/scripts/` and follows the same rule.
 
 For Codex package validation, run the `quick_validate.py` script provided by the
 installed `skill-creator` skill. Do not hard-code a machine-specific path.

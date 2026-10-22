@@ -41,6 +41,9 @@ node outside the allowlist returns no hits.
 ## Read-only checks
 
 ```bash
+# Preferred: one invocation validates binding/freshness and returns whole evidence units.
+python context-graph/scripts/ask.py --project-root . --read-only --evidence-units "one narrow question"
+# Optional diagnostics / legacy lexical probe (not prerequisites for the command above).
 python context-graph/scripts/ask.py --project-root . --binding-only
 python context-graph/scripts/ask.py --project-root . --read-only "one narrow question"
 ```
@@ -52,6 +55,14 @@ map using existing lexical matching; it does not call graphify, create caches,
 rebuild anything, or implement a new embedding model. `--binding-only` returns no
 hits. Failures have `binding.status=unverified`, an explicit reason, `hits=[]`,
 and exit 2. Check the state, not just whether output exists.
+
+`--evidence-units` is opt-in. It replays the verified source hashes before
+extracting complete paragraphs and table rows, and retains source/line/hash
+provenance. It never merges different rows merely because they share a line.
+The UTF-8 serialized `hits` list fits `answer_budget`; binding metadata is
+additional. Oversized units are withheld whole and reported in `omitted_units`.
+`partial` and `absence_proven=false` prevent interpreting an incomplete search
+as proof of absence. This is source verification, not rights or canonical approval.
 
 The default graphify/chain/path/conflict modes also validate binding first.
 Their existing behavior is otherwise retained; they are not the read-only probe,

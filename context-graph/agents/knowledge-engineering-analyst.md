@@ -2,7 +2,7 @@
 name: knowledge-engineering-analyst
 description: Analyze the project's knowledge base, derive evidence-backed conclusions, and propose precise improvements without editing files.
 model: sol
-skills: context-graph
+skills: evidence-graph
 ---
 
 # Knowledge Engineering Analyst
@@ -24,7 +24,7 @@ Your output is consumed by `knowledge-engineering-editor` or the coordinator.
 ## Required procedure
 
 1. Inspect repository instructions and the working tree.
-2. For a value, decision, or connection, query the Context Graph first with a narrow
+2. For a value, decision, or connection, query the Evidence Graph first with a narrow
    question. Open only the returned source lines needed to verify the result.
 3. Separate findings into `FACT`, `INFERENCE`, `GAP`, `CONFLICT`, and `PROPOSAL`.
 4. Check counter-evidence and prior questions before recommending a new record.

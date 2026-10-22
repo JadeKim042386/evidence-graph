@@ -1,8 +1,11 @@
-# Context Graph · Knowledge Engineering Skill
+# Evidence Graph · Knowledge Engineering Skill
 
 This project provides a cross-runtime Knowledge Engineering Skill for Codex and
 Claude Code. It turns source material into traceable, reviewable knowledge and
 HTML-first projections that answer with evidence or deliberately abstain.
+
+Evidence Graph is the public name and the registered skill identifier is
+`evidence-graph`.
 
 **Evaluation snapshot** — paired development-set results:
 
@@ -66,14 +69,14 @@ no-op. Codex has no verified universal lifecycle hook surface.
 Download the latest release, then install the skill from:
 
 ```text
-context-graph/skills/knowledge-engineering/
+context-graph/skills/evidence-graph/
 ```
 
 For a project-local installation, clone the repository and keep that directory
 available from the project root:
 
 ```bash
-git clone --branch v0.9.3 https://github.com/JadeKim042386/context-graph.git
+git clone --branch v0.9.6 https://github.com/JadeKim042386/evidence-graph.git
 ```
 
 ### Claude Code
@@ -81,8 +84,8 @@ git clone --branch v0.9.3 https://github.com/JadeKim042386/context-graph.git
 Install the repository as a local Claude Code marketplace:
 
 ```text
-/plugin marketplace add https://github.com/JadeKim042386/context-graph.git
-/plugin install context-graph@context-graph
+/plugin marketplace add https://github.com/JadeKim042386/evidence-graph.git
+/plugin install evidence-graph@evidence-graph
 ```
 
 Claude Code uses the same `SKILL.md` and reads `CLAUDE.md` host instructions
@@ -111,7 +114,7 @@ They never fall back to `~/.claude/context-graph/config.json` or
 result is not permission to create or edit configuration: setup-generated global
 configurations are not migrated automatically. Create the local binding
 deliberately, then run an approved bound rebuild, following
-`context-graph/skills/context-graph/references/project-binding.md`.
+`context-graph/skills/evidence-graph/references/project-binding.md`.
 
 ### Optional retrieval and backend components
 
@@ -231,7 +234,7 @@ snapshot, or goal-state transition.
 
 ## 6. Evaluation: with versus without the skill
 
-The `context-graph` retrieval skill was evaluated with paired runs: the same
+The Evidence Graph retrieval skill (`evidence-graph`) was evaluated with paired runs: the same
 agent, with the skill absent and installed, on one sealed 12-task development set
 (9 project-knowledge questions, including 2 abstention tasks and 1 task whose
 sources conflict, plus 3 non-knowledge controls). Both arms used the same corpus

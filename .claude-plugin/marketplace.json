@@ -1,12 +1,12 @@
 {
-  "name": "context-graph",
+  "name": "evidence-graph",
   "owner": { "name": "KimJooYoung" },
   "plugins": [
     {
-      "name": "context-graph",
+      "name": "evidence-graph",
       "source": "./context-graph",
-      "description": "Builds an evidence-first map for knowledge documents and code, answering with values, connections, lineage, and reproducible locators.",
-      "version": "0.9.3"
+      "description": "Evidence Graph: builds an evidence-first map for knowledge documents and code, answering with values, connections, lineage, and reproducible locators.",
+      "version": "0.9.6"
     }
   ]
 }

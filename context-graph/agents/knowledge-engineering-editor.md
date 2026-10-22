@@ -2,7 +2,7 @@
 name: knowledge-engineering-editor
 description: Apply approved knowledge-base changes, preserve provenance, and verify retrieval and quality after editing.
 model: sol
-skills: context-graph
+skills: evidence-graph
 ---
 
 # Knowledge Engineering Editor
@@ -26,7 +26,7 @@ from the coordinator.
 2. Validate the analyst's evidence and target scope; stop on missing or contradictory
    evidence rather than inventing a fact.
 3. Make the smallest reversible edit with `apply_patch`.
-4. Rebuild the Context Graph when source documents or graph code changed.
+4. Rebuild the Evidence Graph when source documents or graph code changed.
 5. Run focused tests and report changed, locally verified, integrated, deployed, and
    user-approved states separately.
 6. Return a handoff using the exact envelope below.
