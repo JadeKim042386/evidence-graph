@@ -243,6 +243,32 @@ graders are evaluator-only and are not part of this package. Intervals are
 95% case-cluster bootstrap intervals over the 12 tasks (installed minus absent,
 per run).
 
+<details>
+<summary>Show the 12 evaluation tasks</summary>
+
+The evaluation prompts are shown for transparency. Gold answers, evaluator-only
+labels, and grading logic remain private and are not included here.
+
+**Project-knowledge tasks**
+
+1. **A1 — License lookup:** Which reuse license applies to the metaphacts layers image recorded in the project?
+2. **A2 — Metric lookup:** What p95 latency was actually measured for the source-diverse ontology evaluation?
+3. **C1 — Standards status:** According to the project's comparative review, what is the implementation status of SPARQL 1.1 Query and SHACL?
+4. **C3 — Acceptance count:** How many of the 20 source-diverse candidate sources are accepted?
+5. **E1 — Hypothesis boundary:** Which comparable material does the knowledge-engineering comparative review label “Hypothesis only,” and what does the review say it requires before it can be relied on?
+6. **E2 — Collection stopping rule:** According to the 2026-09-21 multimedia collection plan, when should collection stop?
+7. **I1 — Quality-gate workflow:** In the ontology iteration loop, what is recorded when every primary quality metric is within its declared tolerance, what happens next, and can latency settle the outcome?
+8. **I3 — Rights-state distribution:** After the ontology unverified-item recheck, how many items ended up in each rights state?
+9. **I4 — Rights and scope:** What is the rights status of TIB AV-Portal item 62287, and what does it cover?
+
+**Non-knowledge control tasks**
+
+10. **N1 — Code generation:** Write a small Python function `fib(n)` that returns the n-th Fibonacci number iteratively, with a docstring.
+11. **N2 — General explanation:** In two sentences, explain the difference between TCP and UDP.
+12. **N3 — Short summarization:** Summarize “The release was delayed because the integration tests failed on two platforms.” in five words or fewer.
+
+</details>
+
 **Codex** — Codex CLI 0.163.0, `gpt-6.1-sol`, reasoning effort low; skill
 wording from accepted cycle17 (`SKILL.md` `446d5adb…`); 24 runs per arm
 (12 tasks × 2 filesystem conditions).
