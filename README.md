@@ -4,6 +4,16 @@ This project provides a cross-runtime Knowledge Engineering Skill for Codex and
 Claude Code. It turns source material into traceable, reviewable knowledge and
 HTML-first projections that answer with evidence or deliberately abstain.
 
+**Evaluation snapshot** — paired development-set results:
+
+| Runtime | Accuracy | Input tokens | Mean latency | Citation recall |
+|---|---:|---:|---:|---:|
+| Codex | 17/24 → 17/24 | 1,293,980 → 573,833 (**−55.7%**) | 13.9072s → 9.7878s | 94.4% → 100% |
+| Claude Code | 63/72 → 71/72 | 2,611,802 → 2,199,639 (**−15.8%**) | 11.2744s → 10.5681s | 96.3% → 100% |
+
+Values are **without skill → with skill**. Claude’s accuracy gain is measured
+but not statistically established; see the [detailed evaluation](#6-evaluation-with-versus-without-the-skill).
+
 ## 1. Overall structure
 
 ![Overall knowledge-engineering structure](context-graph/assets/readme/overall-structure-v2.png)
@@ -218,6 +228,72 @@ graphs, indexes, reports, and optional Archify diagrams are projections rebuilt
 from approved inputs; they are never hand-edited. Memory stores pointers rather
 than source text and is updated only after an approved decision, verified
 snapshot, or goal-state transition.
+
+## 6. Evaluation: with versus without the skill
+
+The `context-graph` retrieval skill was evaluated with paired runs: the same
+agent, with the skill absent and installed, on one sealed 12-task development set
+(9 project-knowledge questions, including 2 abstention tasks and 1 task whose
+sources conflict, plus 3 non-knowledge controls). Both arms used the same corpus
+snapshot, prompts, task order, and frozen code-based graders. Gold answers and
+graders are evaluator-only and are not part of this package. Intervals are
+95% case-cluster bootstrap intervals over the 12 tasks (installed minus absent,
+per run).
+
+**Codex** — Codex CLI 0.163.0, `gpt-6.1-sol`, reasoning effort low; skill
+wording from accepted cycle17 (`SKILL.md` `446d5adb…`); 24 runs per arm
+(12 tasks × 2 filesystem conditions).
+
+| Metric | Without skill | With skill | Paired difference |
+|---|---:|---:|---|
+| Literal correctness | 17/24 | 17/24 | 0.0 [0.0, 0.0] — unchanged |
+| Atom coverage | 0.8618 | 0.8618 | 0.0 [0.0, 0.0] |
+| Calibrated proxy (one ambiguous control excluded) | 22/22 | 22/22 | — |
+| Abstention | 4/4 | 4/4 | — |
+| Citation recall / citations fully valid | 0.9444 / 16 of 18 | 1.0 / 18 of 18 | — |
+| Shell commands (failed) | 59 (10) | 20 (0) | −1.625 per run [−2.375, −0.9583] |
+| Input tokens, including cached | 1,293,980 | 573,833 | −30,006.125 per run [−47,948.5427, −15,300.5271] |
+| Output tokens | 5,807 | 4,792 | — |
+| Latency mean / p95 (s) | 13.9072 / 25.0301 | 9.7878 / 12.6007 | −4.1194 s [−6.5839, −1.9841] |
+| Skill used on non-knowledge controls | 0 of 6 | 2 of 6 | — |
+
+**Claude Code** — Claude Code 2.1.308, `claude-sonnet-5-5`, effort low;
+current skill wording (`SKILL.md` `f2720b5e…`); 72 runs per arm
+(12 tasks × 2 filesystem conditions × 3 repetitions).
+
+| Metric | Without skill | With skill | Paired difference |
+|---|---:|---:|---|
+| Literal correctness | 63/72 | 71/72 | +0.1111 [0.0, 0.2778] — lower bound 0, not established |
+| Atom coverage | 0.9660 | 0.9965 | +0.0306 [0.0, 0.075] |
+| Calibrated proxy (one ambiguous control excluded) | 65/66 | 66/66 | +0.0152 [0.0, 0.0455] |
+| Abstention | 12/12 | 12/12 | — |
+| Citation recall / citations fully valid | 0.963 / 50 of 54 | 1.0 / 54 of 54 | — |
+| Conflicting-source task, literal | 2/6 | 6/6 | — |
+| Tool calls (failed) | 118 (3) | 108 (0) | −0.1389 per run [−0.5556, 0.2639] |
+| Input tokens, including cached | 2,611,802 | 2,199,639 | −5,724.4861 per run [−14,594.4219, 1,978.6924] |
+| Output tokens | 43,796 | 38,306 | — |
+| Latency mean / p95 (s) | 11.2744 / 22.1910 | 10.5681 / 16.2523 | −0.7063 s [−2.2162, 0.8722] |
+| CLI-reported cost (USD) | 1.9445 | 1.0564 | — |
+| Skill used on non-knowledge controls | 0 of 18 | 0 of 18 | — |
+
+What these results support:
+
+- **Codex:** accuracy was unchanged; the skill reduced input tokens, shell
+  commands, and latency, with intervals that exclude zero for those paired
+  measures.
+- **Claude Code:** correctness and citation measures were higher with the
+  skill, but every accuracy interval has a lower bound of 0, so an accuracy
+  gain is not statistically established. The direct paired result is a
+  measured improvement, not a generalization claim.
+- **Both:** the skill reached full citation recall and preserved abstention.
+
+These tables are separate experiments with different models, tools,
+repetitions, and skill wording. They must not be used to rank Codex against
+Claude Code. The current wording was evaluated on Claude Code only; the Codex
+table describes the earlier accepted cycle17 wording. These are 12 known
+development tasks near the score ceiling, not a held-out benchmark. Provider
+caching and service latency were not controlled. Evaluation records remain
+outside the package under `work/coordination/`.
 
 ## Contracts and verification
 
