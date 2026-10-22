@@ -18,7 +18,7 @@ retrieval. The final answer state is `answer`, `conflict`, or `abstain`.
 
 ## 2. Operation flow and order
 
-![Knowledge-engineering workflow and state transitions](assets/readme/workflow-static-v4.png)
+![Evidence-first knowledge-engineering workflow](assets/readme/workflow-static-v5.png)
 
 The workflow has eight ordered stages:
 
@@ -174,7 +174,7 @@ installed `skill-creator` skill. Do not hard-code a machine-specific path.
 
 ## 4. Folder structure
 
-![Knowledge-engineering repository folder structure](assets/readme/folder-structure-v2.png)
+![Evidence Graph repository folder structure](assets/readme/folder-structure-v3.png)
 
 | Folder | What it contains | Editing rule |
 |---|---|---|
@@ -187,7 +187,7 @@ installed `skill-creator` skill. Do not hard-code a machine-specific path.
 
 ## 5. Record information
 
-![Knowledge-engineering record and evidence chain](assets/readme/record-chain-v2.png)
+![Illustrative Evidence Graph record and evidence chain](assets/readme/record-chain-v3.png)
 
 Records are small, stable, and connected by provenance. A content claim is
 usable only when its chain can be replayed:
