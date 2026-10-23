@@ -6,9 +6,9 @@ checkout's read-only continuity and binding CLIs. It changes no memory, config, 
 
 ## 1. Confirm the project root
 
-The selected project root must be `/Users/joo/Desktop/context-graph`. Use the scripts
+The selected project root must be `/Users/joo/Desktop/evidence-graph`. Use the scripts
 in this checkout at the exact paths below. Do not pick a globally installed or cached
-copy of the `context-graph` plugin or skill because it has the same name; the cached
+copy of the `evidence-graph` plugin or skill because it has the same name; the cached
 copy may be older and may lack the knowledge-engineering continuity scripts.
 
 ## 2. Follow AGENTS.md
@@ -20,10 +20,10 @@ or replace AGENTS rules.
 ## 3. Before any analysis or retrieval, run both read-only commands
 
 ```bash
-python -B /Users/joo/Desktop/context-graph/context-graph/scripts/ask.py \
-  --project-root /Users/joo/Desktop/context-graph --binding-only
-python -B /Users/joo/Desktop/context-graph/context-graph/skills/knowledge-engineering/scripts/build_task_continuity.py \
-  --root /Users/joo/Desktop/context-graph
+python -B /Users/joo/Desktop/evidence-graph/evidence-graph/scripts/ask.py \
+  --project-root /Users/joo/Desktop/evidence-graph --binding-only
+python -B /Users/joo/Desktop/evidence-graph/evidence-graph/skills/knowledge-engineering/scripts/build_task_continuity.py \
+  --root /Users/joo/Desktop/evidence-graph
 ```
 
 Neither command writes memory, indexes, config, or host files.

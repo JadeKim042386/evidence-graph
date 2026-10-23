@@ -19,7 +19,7 @@ but not statistically established; see the [detailed evaluation](#6-evaluation-w
 
 ## 1. Overall structure
 
-![Overall knowledge-engineering structure](context-graph/assets/readme/overall-structure-v2.png)
+![Overall knowledge-engineering structure](evidence-graph/assets/readme/overall-structure-v2.png)
 
 The system moves from a bounded question and preserved source material to
 canonical records, evidence checks, graph validation, projections, and measured
@@ -27,7 +27,7 @@ retrieval. The final answer state is `answer`, `conflict`, or `abstain`.
 
 ## 2. Operation flow and order
 
-![Evidence-first knowledge-engineering workflow](context-graph/assets/readme/workflow-static-v5.png)
+![Evidence-first knowledge-engineering workflow](evidence-graph/assets/readme/workflow-static-v5.png)
 
 The workflow has eight ordered stages:
 
@@ -53,7 +53,7 @@ proposals under `knowledge-base/_ops/session-proposals/`. Activate this once per
 consuming project after installation:
 
 ```bash
-python context-graph/skills/knowledge-engineering/scripts/record_session_event.py init \
+python evidence-graph/skills/knowledge-engineering/scripts/record_session_event.py init \
   --root . --runtime claude-code --include 'knowledge/**' --include 'design/**'
 ```
 
@@ -69,14 +69,14 @@ no-op. Codex has no verified universal lifecycle hook surface.
 Download the latest release, then install the skill from:
 
 ```text
-context-graph/skills/evidence-graph/
+evidence-graph/skills/evidence-graph/
 ```
 
 For a project-local installation, clone the repository and keep that directory
 available from the project root:
 
 ```bash
-git clone --branch v0.9.6 https://github.com/JadeKim042386/evidence-graph.git
+git clone --branch v0.9.7 https://github.com/JadeKim042386/evidence-graph.git
 ```
 
 ### Claude Code
@@ -97,24 +97,24 @@ From the project root, ask for a knowledge analysis, proposal, review,
 modification, or evidence-backed answer. Useful commands are:
 
 ```bash
-python context-graph/skills/knowledge-engineering/scripts/update_memory.py --help
-python context-graph/skills/knowledge-engineering/scripts/validate_workspace.py --root . --profile project
-python context-graph/scripts/build_map.py --help
-python context-graph/scripts/ask.py --project-root . --binding-only
-python context-graph/scripts/ask.py --project-root . "question"
-python context-graph/scripts/ask.py --project-root . --conflicts
+python evidence-graph/skills/knowledge-engineering/scripts/update_memory.py --help
+python evidence-graph/skills/knowledge-engineering/scripts/validate_workspace.py --root . --profile project
+python evidence-graph/scripts/build_map.py --help
+python evidence-graph/scripts/ask.py --project-root . --binding-only
+python evidence-graph/scripts/ask.py --project-root . "question"
+python evidence-graph/scripts/ask.py --project-root . --conflicts
 ```
 
 Retrieval and map builds are project-bound and fail closed. `ask.py` and
 `build_map.py` require `--project-root` and read only
-`<project-root>/.context-graph/config.json` (or a `--config` inside that root).
-They never fall back to `~/.claude/context-graph/config.json` or
+`<project-root>/.evidence-graph/config.json` (or a `--config` inside that root).
+They never fall back to `~/.claude/evidence-graph/config.json` or
 `KNOWLEDGE_MAP_CONFIG`. A missing, mismatched, or stale binding prints
 `binding.status=unverified` with a reason, `hits=[]`, and exits with code 2. That
 result is not permission to create or edit configuration: setup-generated global
 configurations are not migrated automatically. Create the local binding
 deliberately, then run an approved bound rebuild, following
-`context-graph/skills/evidence-graph/references/project-binding.md`.
+`evidence-graph/skills/evidence-graph/references/project-binding.md`.
 
 ### Optional retrieval and backend components
 
@@ -170,9 +170,9 @@ before adoption.
 Run the code projection and its current comparison with:
 
 ```bash
-python context-graph/scripts/code_index.py collect --repo . --commit HEAD
-python context-graph/scripts/code_index.py index --repo . --commit HEAD
-python context-graph/scripts/evaluate_code_index.py --repo . --query build_map --query ask --query parse_html
+python evidence-graph/scripts/code_index.py collect --repo . --commit HEAD
+python evidence-graph/scripts/code_index.py index --repo . --commit HEAD
+python evidence-graph/scripts/evaluate_code_index.py --repo . --query build_map --query ask --query parse_html
 ```
 
 The current benchmark retained recall `1.0` while reducing the candidate set
@@ -186,27 +186,27 @@ changes. Confirm the package files, test Codex and Claude Code independently
 for actual skill discovery, run one read-only smoke request, compare the
 working-tree status before and after, and run the portable validator. The full
 procedure and acceptance criteria are in
-`context-graph/skills/knowledge-engineering/references/post-install-verification.md`.
+`evidence-graph/skills/knowledge-engineering/references/post-install-verification.md`.
 
 For Codex package validation, run the `quick_validate.py` script provided by the
 installed `skill-creator` skill. Do not hard-code a machine-specific path.
 
 ## 4. Folder structure
 
-![Evidence Graph repository folder structure](context-graph/assets/readme/folder-structure-v3.png)
+![Evidence Graph repository folder structure](evidence-graph/assets/readme/folder-structure-v3.png)
 
 | Folder | What it contains | Editing rule |
 |---|---|---|
-| `context-graph/skills/knowledge-engineering/` | Skill instructions, references, and helper scripts | Change shared workflow rules deliberately |
-| `context-graph/agents/` | Analysis, modification, and coordination roles | Keep role boundaries explicit |
-| `context-graph/tests/` | Skill, packaging, parser, and integration tests | Add regression coverage for contract changes |
-| `context-graph/scripts/` | Map-building, parsing, lookup, and validation helpers | Run from the consuming project root |
-| `context-graph/assets/readme/` | Documentation images for the skill package | Keep images aligned with the package workflow |
+| `evidence-graph/skills/knowledge-engineering/` | Skill instructions, references, and helper scripts | Change shared workflow rules deliberately |
+| `evidence-graph/agents/` | Analysis, modification, and coordination roles | Keep role boundaries explicit |
+| `evidence-graph/tests/` | Skill, packaging, parser, and integration tests | Add regression coverage for contract changes |
+| `evidence-graph/scripts/` | Map-building, parsing, lookup, and validation helpers | Run from the consuming project root |
+| `evidence-graph/assets/readme/` | Documentation images for the skill package | Keep images aligned with the package workflow |
 | `.claude-plugin/` | Claude Code marketplace metadata | Keep package source and version aligned |
 
 ## 5. Record information
 
-![Illustrative Evidence Graph record and evidence chain](context-graph/assets/readme/record-chain-v3.png)
+![Illustrative Evidence Graph record and evidence chain](evidence-graph/assets/readme/record-chain-v3.png)
 
 Records are small, stable, and connected by provenance. A content claim is
 usable only when its chain can be replayed:
@@ -326,7 +326,7 @@ outside the package under `work/coordination/`.
 
 ## Contracts and verification
 
-Detailed contracts are in `context-graph/skills/knowledge-engineering/references/`:
+Detailed contracts are in `evidence-graph/skills/knowledge-engineering/references/`:
 
 - `record-schema.md` — canonical record fields
 - `evidence-rules.md` — support, conflict, freshness, and reproducibility rules
@@ -335,9 +335,9 @@ Detailed contracts are in `context-graph/skills/knowledge-engineering/references
 - `code-workflow.md` — code evidence, indexing, fallback, and evaluation rules
 
 ```bash
-pytest -q context-graph/tests/test_final_skill_contract.py
-pytest -q context-graph/tests/test_knowledge_engineering_skill.py
-pytest -q context-graph/tests
+pytest -q evidence-graph/tests/test_final_skill_contract.py
+pytest -q evidence-graph/tests/test_knowledge_engineering_skill.py
+pytest -q evidence-graph/tests
 ```
 
 ## License

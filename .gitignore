@@ -16,7 +16,7 @@ __pycache__/
 /design/support.js
 /design/*.gif
 
-design/context-graph-diagrams.html
+design/evidence-graph-diagrams.html
 
 # Local knowledge, research, coordination, and host configuration.
 # These are intentionally excluded from the installable skill package.
@@ -33,7 +33,7 @@ design/context-graph-diagrams.html
 
 # Experimental README renderings; the released package keeps only the
 # referenced documentation images.
-/context-graph/assets/readme/workflow-base-v2.png
-/context-graph/assets/readme/workflow-storyboard-v3.png
-/context-graph/assets/readme/workflow-v2.gif
-/context-graph/assets/readme/workflow-v3.gif
+/evidence-graph/assets/readme/workflow-base-v2.png
+/evidence-graph/assets/readme/workflow-storyboard-v3.png
+/evidence-graph/assets/readme/workflow-v2.gif
+/evidence-graph/assets/readme/workflow-v3.gif

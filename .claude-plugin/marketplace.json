@@ -4,9 +4,9 @@
   "plugins": [
     {
       "name": "evidence-graph",
-      "source": "./context-graph",
+      "source": "./evidence-graph",
       "description": "Evidence Graph: builds an evidence-first map for knowledge documents and code, answering with values, connections, lineage, and reproducible locators.",
-      "version": "0.9.6"
+      "version": "0.9.7"
     }
   ]
 }

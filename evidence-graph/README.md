@@ -1,0 +1,230 @@
+# Evidence Graph Skill Package
+
+Evidence Graph is the public name and the registered skill identifier is
+`evidence-graph`.
+
+This package provides a cross-runtime Knowledge Engineering Skill for Codex and
+Claude Code. It supports analysis, proposal, review, and modification workflows,
+turning source material into traceable, reviewable knowledge and
+HTML-first projections that answer with evidence or deliberately abstain.
+
+## 1. Overall structure
+
+![Overall knowledge-engineering structure](assets/readme/overall-structure-v2.png)
+
+The system moves from a bounded question and preserved source material to
+canonical records, evidence checks, graph validation, projections, and measured
+retrieval. The final answer state is `answer`, `conflict`, or `abstain`.
+
+## 2. Operation flow and order
+
+![Evidence-first knowledge-engineering workflow](assets/readme/workflow-static-v5.png)
+
+The workflow has eight ordered stages:
+
+1. **Scope** — define the question, domain, date, and acceptance criteria.
+2. **Collect** — preserve documents, datasets, images, video, audio, or URLs.
+3. **Normalize** — create stable Source, Evidence, Claim, Media, and provenance records.
+4. **Model** — represent typed entities, relations, time, and ontology constraints.
+5. **Validate** — check schemas, locators, hashes, freshness, reasoning, conflicts, and gold isolation.
+6. **Review** — compare supporting and counter-evidence and decide accept, revise, hold, or reject.
+7. **Project** — rebuild HTML, graph, search, reports, Context Packs, memory pointers, and optional Archify diagrams.
+8. **Measure** — compare strategies on the same snapshot and question order.
+
+The analysis/proposal role is read-only and returns an evidence-backed handoff.
+The modification role applies only an approved request, preserves provenance,
+creates revisions, rebuilds projections, and verifies the result.
+
+Session continuity is handled separately from canonical knowledge. At session
+start, before and after compaction, and at session end, the Claude Code plugin
+can append privacy-filtered operational events to
+`knowledge-base/_ops/session-events.jsonl` and generate provisional session
+proposals under `knowledge-base/_ops/session-proposals/`. Activate this once per
+consuming project after installation:
+
+```bash
+python skills/knowledge-engineering/scripts/record_session_event.py init \
+  --root . --runtime claude-code --include 'knowledge/**' --include 'design/**'
+```
+
+The generated records preserve artifact pointers, hashes, and verification
+state; they do not copy prompts or transcripts and never promote memory or
+canonical records automatically. Without activation, hooks are a successful
+no-op. Codex has no verified universal lifecycle hook surface.
+
+## 3. Installation and use
+
+### Codex
+
+Copy or link `skills/knowledge-engineering/` into the project's configured Codex
+skills location, or keep it in the project at:
+
+```text
+skills/knowledge-engineering/SKILL.md
+```
+
+### Claude Code
+
+Install this package as a Claude Code plugin checkout. Claude Code loads the same
+`SKILL.md` and uses `CLAUDE.md` host instructions when present; it does not
+require `AGENTS.md`. The skill does not assume a host-specific environment
+variable.
+
+After installation, run from the project root and ask for a knowledge analysis,
+proposal, review, modification, or evidence-backed answer.
+
+Retrieval follows the project's language rule: ask in the language the document
+is written in, respect the configured `answer_budget`, and ask narrowly so broad
+questions return only the relevant set.
+
+### Optional retrieval and backend components
+
+The skill installs and runs with the local lexical index and graph workflow by
+default. It does not automatically install an embedding model or a separate
+backend.
+
+During use, the skill may measure retrieval quality and operational limits. An
+embedding model is proposed only when held-out retrieval or locator recall is
+below the configured gate, semantic misses remain after lexical and graph
+improvements, and a paired comparison shows a meaningful quality gain within
+the latency and cost budget. A separate backend is proposed only when local
+execution cannot meet an actual multi-user, API, continuous-ingestion,
+concurrency, or service-level requirement.
+
+```text
+Install the skill
+        |
+Use the default local workflow
+        |
+Measure quality and operating limits
+        |
+Does the evidence meet an adoption gate?
+   |                         |
+  No                        Yes
+   |                         |
+Keep the local workflow   Propose and compare the optional component
+                             |
+                        User approval
+                             |
+                    Add embedding or backend configuration
+```
+
+Optional components are therefore opt-in and evidence-driven. They are never
+downloaded, started, or added silently merely because a query is difficult.
+
+### Code work design
+
+Code work uses the same evidence-first workflow. Git and reviewed JSON/JSONL
+records are canonical; the current derived retrieval path is a commit-bound
+multi-language index. Python uses duplicate-safe AST symbols and bounded
+`contains`/`imports` expansion, while other registered languages use
+low-confidence lexical candidates without structural relationship claims.
+
+The code index records commit, tree, blob, path, line, content hash, replay
+locator, and provenance. It does not replace the repository or claim runtime
+behavior from static analysis alone. SCIP, RDF, graph databases, embeddings,
+and runtime backends are optional and require a paired held-out evaluation
+before adoption.
+
+Run the code projection and its current comparison with:
+
+```bash
+python scripts/code_index.py collect --repo . --commit HEAD
+python scripts/code_index.py index --repo . --commit HEAD
+python scripts/evaluate_code_index.py --repo . --query build_map --query ask --query parse_html
+```
+
+The current benchmark retained recall `1.0` while reducing the candidate set
+from `12` lexical candidates to `3` structure-index candidates. This is a
+project baseline, not a general claim about all languages or repositories.
+
+### Verify the installation and host integration
+
+After installation, verify the installed skill before using it for project
+changes. Confirm the package files, test Codex and Claude Code independently
+for actual skill discovery, run one read-only smoke request, compare the
+working-tree status before and after, and run the portable validator. The full
+procedure and acceptance criteria are in
+`skills/knowledge-engineering/references/post-install-verification.md`.
+
+Useful commands:
+
+```bash
+python skills/knowledge-engineering/scripts/update_memory.py --help
+python skills/knowledge-engineering/scripts/validate_workspace.py --root .. --profile portable
+python scripts/build_map.py --help
+python scripts/ask.py --project-root . --binding-only
+python scripts/ask.py --project-root . "question"
+python scripts/ask.py --project-root . --conflicts
+```
+
+`ask.py` and `build_map.py` bind to one project and fail closed: `--project-root`
+is required, the config is `<project-root>/.evidence-graph/config.json`, and no
+global config or `KNOWLEDGE_MAP_CONFIG` fallback exists. A missing or mismatched
+binding, or a source changed since the last build, returns
+`binding.status=unverified`, `hits=[]`, and exit code 2. Treat that as a stop,
+not as permission to create configuration or rebuild. Legacy setup-generated
+configurations are not migrated automatically; see
+`skills/evidence-graph/references/project-binding.md` for the local contract.
+The Codex-installed skill ships the same scripts under
+`skills/evidence-graph/scripts/` and follows the same rule.
+
+For Codex package validation, run the `quick_validate.py` script provided by the
+installed `skill-creator` skill. Do not hard-code a machine-specific path.
+
+## 4. Folder structure
+
+![Evidence Graph repository folder structure](assets/readme/folder-structure-v3.png)
+
+| Folder | What it contains | Editing rule |
+|---|---|---|
+| `skills/knowledge-engineering/` | Skill instructions, references, and helper scripts | Change shared workflow rules deliberately |
+| `agents/` | Analysis, modification, and coordination roles | Keep role boundaries explicit |
+| `tests/` | Skill, packaging, parser, and integration tests | Add regression coverage for contract changes |
+| `scripts/` | Map-building, parsing, lookup, and validation helpers | Run from the consuming project root |
+| `assets/readme/` | Documentation images for the skill package | Keep images aligned with the package workflow |
+| `.claude-plugin/` | Claude Code plugin metadata | Keep package source and version aligned |
+
+## 5. Record information
+
+![Illustrative Evidence Graph record and evidence chain](assets/readme/record-chain-v3.png)
+
+Records are small, stable, and connected by provenance. A content claim is
+usable only when its chain can be replayed:
+
+```text
+Claim → Evidence → Source revision
+   ↑          ↑
+Review    Provenance activity
+```
+
+| Record | Purpose | Important information |
+|---|---|---|
+| `Source` | Identifies the original material | `id`, revision, title, URL/path, access date, hash, rights |
+| `Evidence` | Points to the exact supporting location | `id`, source revision, locator, observed text/data, freshness |
+| `Claim` | States one atomic proposition | `id`, statement, scope, status, evidence references, `supersedes` |
+| `Media` | Describes image, video, or audio evidence | format, hash, rights, region/page/timecode locator, derivative links |
+| `Review` / `Decision` | Records human assessment and approval | reviewer, criteria, decision, status, conflicts, date |
+| `Validation` | Records quality and consistency checks | method, snapshot, result, failures, replay details |
+
+Metadata-only observations cannot support content claims. Generated HTML,
+graphs, indexes, reports, and optional Archify diagrams are projections rebuilt
+from approved inputs; they are never hand-edited. Memory stores pointers rather
+than source text and is updated only after an approved decision, verified
+snapshot, or goal-state transition.
+
+## Contracts and verification
+
+Detailed contracts are in `skills/knowledge-engineering/references/`:
+
+- `record-schema.md` — canonical record fields
+- `evidence-rules.md` — support, conflict, freshness, and reproducibility rules
+- `memory-update.md` — pointer-only Second Brain state updates
+- `validation-gates.md` — workspace and projection checks
+- `code-workflow.md` — code evidence, indexing, fallback, and evaluation rules
+
+```bash
+pytest -q tests/test_final_skill_contract.py
+pytest -q tests/test_knowledge_engineering_skill.py
+pytest -q tests
+```
