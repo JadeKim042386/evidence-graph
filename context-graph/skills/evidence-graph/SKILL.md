@@ -26,7 +26,7 @@ The batch authorizes no other action; binding or freshness failure still stops
 retrieval. If the host requires a separate instruction read, respect that rule.
 Once these instructions are already in context, run only the query command.
 
-Claude: `${CLAUDE_PLUGIN_ROOT}/scripts/ask.py`; checkout: `context-graph/scripts/ask.py`.
+Claude: `${CLAUDE_PLUGIN_ROOT}/skills/evidence-graph/scripts/ask.py`; checkout: `context-graph/skills/evidence-graph/scripts/ask.py`.
 This call validates binding, map integrity and source freshness. No preliminary
 binding call, directory scan or reference read. Only a plain query is accepted:
 `--path`, `--explain`, `--chain`, `--conflicts` are separate modes, not filters.
